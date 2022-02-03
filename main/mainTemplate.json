@@ -85,10 +85,6 @@
       "networkSecurityGroupId": {
         "value": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
       }
-    },
-
-    "networkSecurityGroupId": {
-      "value": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
     }
   },
   "resources":[

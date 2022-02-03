@@ -21,17 +21,6 @@
       "apiVersion": "2020-11-01",
       "name": "[parameters('nicName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[parameters('networkSecurityGroupId')]"
-      ],
-      "tags": {
-        "Dept": "Dev",
-        "Reason": "Testing",
-        "dontStop": "False",
-        "dontTerminate": "True",
-        "product": "SaaS",
-        "owner": "amaroz"
-      },
       "properties": {
         "ipConfigurations": [
           {
