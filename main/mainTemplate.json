@@ -1,0 +1,136 @@
+{
+  "$schema":"https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion":"1.0.0.0",
+  "parameters":{
+    "adminPassword":{
+      "type":"securestring",
+      "metadata":{
+        "description":"Password for the Virtual Machine."
+      }
+    },
+    "artifactsBaseUrl": {
+      "type": "string",
+      "metadata": {
+        "artifactsBaseUrl": "/",
+        "description": "The base URL for dependent assets"
+      },
+      "defaultValue": "https://raw.githubusercontent.com/amarozinfoblox/azure-templates/master/main/"
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[ResourceGroup().Location]",
+      "metadata": {
+        "description": "Location of resources."
+      }
+    },
+    "vmName":{
+      "type":"string",
+      "defaultValue":"Bloxone",
+      "metadata":{
+        "description":"Name for the Virtual Machine."
+      }
+    },
+    "vmSize":{
+      "type":"string",
+      "metadata":{
+        "description":"Size of the Virtual Machine."
+      },
+      "defaultValue": "Standard_B2s",
+      "allowedValues":[
+        "Standard_B2s",
+        "Standard_B2ms",
+        "Standard_B4ms",
+        "Standard_B8ms",
+        "Standard_B12ms",
+        "Standard_B16ms",
+        "Standard_B20ms"
+      ]
+    },
+    "virtualNetworkName":{
+      "type":"string",
+      "defaultValue":"Network",
+      "metadata":{
+        "description":"VNet name"
+      }
+    },
+    "subnet1Name":{
+      "type":"string",
+      "defaultValue":"",
+      "metadata":{
+        "description":"Subnet 1 Name"
+      }
+    }
+  },
+  "variables": {
+    "nsgName": "[concat(parameters('vmName'), '-securityGroup')]",
+    "nicName": "[concat(parameters('vmName'), '-networkInterface')]",
+
+    "nicPrimarySetupURL": "[concat(parameters('artifactsBaseUrl'), '/nic-pip-none.json')]",
+
+    "vnetResourceId": "[variables('vnet-new')]",
+    "vnet-new": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
+    "subnet1ResourceId":" [concat(variables('vnetResourceId'), '/subnets/', parameters('subnet1Name'))]",
+    "nicPrimaryName": "[concat(parameters('vmName'), '-lan1')]",
+
+    "nicprimaryNoneParams": {
+      "location": {
+        "value": "[parameters('location')]"
+      },
+      "nicName": {
+        "value": "[variables('nicPrimaryName')]"
+      },
+      "subnetId": {
+        "value": "[variables('subnet1ResourceId')]"
+      },
+      "networkSecurityGroupId": {
+        "value": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+      }
+    },
+
+    "networkSecurityGroupId": {
+      "value": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+    }
+  },
+  "resources":[
+    {
+      "apiVersion": "2020-06-01",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('nsgName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "SSH",
+            "properties": {
+              "description": "Allow SSH",
+              "access": "Allow",
+              "destinationAddressPrefix": "*",
+              "destinationPortRange": "22",
+              "direction": "Inbound",
+              "priority": 100,
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name":"SettingUpPrimaryNic",
+      "type":"Microsoft.Resources/deployments",
+      "apiVersion":"2020-06-01",
+      "dependsOn":[
+        "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]"
+      ],
+      "properties":{
+        "mode":"Incremental",
+        "templateLink":{
+          "uri":"[variables('nicPrimarySetupURL')]",
+          "contentVersion":"1.0.0.0"
+        },
+        "parameters":"[variables('nicprimaryNoneParams')]"
+      }
+    }
+  ]
+}
