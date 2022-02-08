@@ -24,22 +24,22 @@
       "type": "object"
     }
   },
-  "variables":{
-    "properties":{
-      "hardwareProfile":"[parameters('hardwareProfile')]",
-      "osProfile":"[parameters('osProfile')]",
-      "storageProfile":"[parameters('storageProfile')]",
-      "networkProfile":"[parameters('networkProfile')]",
-      "diagnosticsProfile":"[parameters('diagnosticsProfile')]"
+  "variables": {
+    "properties": {
+      "hardwareProfile": "[parameters('hardwareProfile')]",
+      "osProfile": "[parameters('osProfile')]",
+      "storageProfile": "[parameters('storageProfile')]",
+      "networkProfile": "[parameters('networkProfile')]",
+      "diagnosticsProfile": "[parameters('diagnosticsProfile')]"
     }
   },
   "resources": [
     {
-      "apiVersion":"2020-12-01",
-      "type":"Microsoft.Compute/virtualMachines",
-      "name":"[parameters('vmName')]",
+      "apiVersion": "2020-12-01",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
-      "properties":"[variables('properties')]"
+      "properties": "[variables('properties')]"
     }
   ],
   "outputs": {}

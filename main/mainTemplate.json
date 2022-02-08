@@ -1,20 +1,26 @@
 {
-  "$schema":"https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-  "contentVersion":"1.0.0.0",
-  "parameters":{
-    "adminPassword":{
-      "type":"securestring",
-      "metadata":{
-        "description":"Password for the Virtual Machine."
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the Virtual Machine."
       }
     },
     "artifactsBaseUrl": {
       "type": "string",
       "metadata": {
         "artifactsBaseUrl": "/",
-        "description": "The base URL for dependent assets"
+        "description": "The base URL for dependent assets."
       },
       "defaultValue": "https://raw.githubusercontent.com/amarozinfoblox/azure-templates/master/main/"
+    },
+    "customData": {
+      "type": "string",
+      "metadata": {
+        "description": "Custom data."
+      }
     },
     "location": {
       "type": "string",
@@ -23,20 +29,81 @@
         "description": "Location of resources."
       }
     },
-    "vmName":{
-      "type":"string",
-      "defaultValue":"Bloxone",
-      "metadata":{
-        "description":"Name for the Virtual Machine."
+    "publicIpAddressName": {
+      "type": "string",
+      "defaultValue": "PublicIP",
+      "metadata": {
+        "description": "Name of the Public IP Address."
       }
     },
-    "vmSize":{
-      "type":"string",
-      "metadata":{
-        "description":"Size of the Virtual Machine."
+    "publicIpExistingRgName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Resource Group containing existing public IP."
+      }
+    },
+    "publicIpNewOrExistingOrNone": {
+      "type": "string",
+      "defaultValue": "new",
+      "allowedValues": [
+        "new",
+        "existing",
+        "none"
+      ],
+      "metadata": {
+        "description": "Indicates whether the Public IP is new or existing."
+      }
+    },
+    "subnet1Name": {
+      "type": "string",
+      "defaultValue": "Subnet1",
+      "metadata": {
+        "description": "Subnet 1 name."
+      }
+    },
+    "subnet1Prefix": {
+      "type": "string",
+      "defaultValue": "10.2.0.0/24",
+      "metadata": {
+        "description": "Subnet 1 prefix."
+      }
+    },
+    "virtualNetworkAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/8",
+      "metadata": {
+        "description": "Virtual network address prefix."
+      }
+    },
+    "virtualNetworkExistingRgName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Resource Group containing existing network."
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "Network",
+      "metadata": {
+        "description": "Virtual network name."
+      }
+    },
+    "vmName": {
+      "type": "string",
+      "defaultValue": "Bloxone",
+      "metadata": {
+        "description": "Name for the Virtual Machine."
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "Size of the Virtual Machine."
       },
       "defaultValue": "Standard_B2s",
-      "allowedValues":[
+      "allowedValues": [
         "Standard_B2s",
         "Standard_B2ms",
         "Standard_B4ms",
@@ -46,33 +113,59 @@
         "Standard_B20ms"
       ]
     },
-    "virtualNetworkName":{
-      "type":"string",
-      "defaultValue":"Network",
-      "metadata":{
-        "description":"VNet name"
-      }
+    "vnetNewOrExisting": {
+      "type": "string",
+      "metadata": {
+        "description": "Identifies whether to use new or existing Virtual Network."
+      },
+      "defaultValue": "new",
+      "allowedValues": [
+        "new",
+        "existing"
+      ]
     },
-    "subnet1Name":{
-      "type":"string",
-      "defaultValue":"",
-      "metadata":{
-        "description":"Subnet 1 Name"
+    "storageAccountType": {
+      "type": "string",
+      "metadata": {
+        "Description": "The type of the Storage Account. !!! Remove before use in Azure Marketplace !!!"
+      },
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Premium_LRS",
+        "StandardSSD_LRS",
+        "Premium_ZRS",
+        "StandardSSD_ZRS"
+      ]
+    },
+    "vhdBlobUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "URL pointing to the blob where the VHD to be used to create VM is located. !!! Remove before use in Azure Marketplace !!!"
       }
     }
   },
   "variables": {
-    "nsgName": "[concat(parameters('vmName'), '-securityGroup')]",
     "nicName": "[concat(parameters('vmName'), '-networkInterface')]",
-
-    "nicPrimarySetupURL": "[concat(parameters('artifactsBaseUrl'), '/nic-pip-none.json')]",
-
-    "vnetResourceId": "[variables('vnet-new')]",
-    "vnet-new": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
-    "subnet1ResourceId":" [concat(variables('vnetResourceId'), '/subnets/', parameters('subnet1Name'))]",
+    "nicPrimaryExistingParams": {
+      "location": {
+        "value": "[parameters('location')]"
+      },
+      "nicName": {
+        "value": "[variables('nicPrimaryName')]"
+      },
+      "subnetId": {
+        "value": "[variables('subnet1ResourceId')]"
+      },
+      "publicIpAddressId": {
+        "value": "[variables('publicIpResourceId')]"
+      },
+      "networkSecurityGroupId": {
+        "value": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+      }
+    },
     "nicPrimaryName": "[concat(parameters('vmName'), '-lan1')]",
-
-    "nicprimaryNoneParams": {
+    "nicPrimaryNoneParams": {
       "location": {
         "value": "[parameters('location')]"
       },
@@ -85,9 +178,71 @@
       "networkSecurityGroupId": {
         "value": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
       }
-    }
+    },
+    "nicPrimarySetupUrl": "[concat(parameters('artifactsBaseUrl'),'nic-pip-',variables('publicIpExistingOrNone'),'.json')]",
+    "nsgName": "[concat(parameters('vmName'), '-securityGroup')]",
+    "osDiskName": "[concat(parameters('vmName'), uniqueString(resourceGroup().id))]",
+    "publicIpAddressType": "Dynamic",
+    "publicIpExistingOrNone": "[replace(parameters('publicIpNewOrExistingOrNone'), 'new', 'existing')]",
+    "publicIpNewOrNone": "[replace(parameters('publicIpNewOrExistingOrNone'), 'existing', 'none')]",
+    "publicIpNewParams": {
+      "location": {
+        "value": "[parameters('location')]"
+      },
+      "publicIpAddressName": {
+        "value": "[parameters('publicIpAddressName')]"
+      },
+      "publicIpAddressType": {
+        "value": "[variables('publicIpAddressType')]"
+      }
+    },
+    "publicIpResourceExisting": "[resourceId(parameters('publicIpExistingRgName'), concat('Microsoft.Network', '/', 'publicIpAddresses'), parameters('publicIpAddressName'))]",
+    "publicIpResourceId": "[if(equals(parameters('publicIpNewOrExistingOrNone'), 'none'), '', if(equals(parameters('publicIpNewOrExistingOrNone'), 'new'), variables('publicIpResourceNew'), variables('publicIpResourceExisting')))]",
+    "publicIpResourceNew": "[resourceId('Microsoft.Network/publicIpAddresses', parameters('publicIpAddressName'))]",
+    "publicIpSetupUrl": "[concat(parameters('artifactsBaseUrl'),'publicip-',variables('publicIpNewOrNone'),'.json')]",
+    "subnet1ResourceId": "[concat(variables('vnetResourceId'), '/subnets/', parameters('subnet1Name'))]",
+    "virtualMachineSetUrl": "[concat(parameters('artifactsBaseUrl'),'vm.json')]",
+    "virtualNetworkSetupUrl": "[concat(parameters('artifactsBaseUrl'),'vnet-',parameters('vnetNewOrExisting'),'.json')]",
+    "vnetNewParams": {
+      "location": {
+        "value": "[parameters('location')]"
+      },
+      "virtualNetworkName": {
+        "value": "[parameters('virtualNetworkName')]"
+      },
+      "virtualNetworkAddressPrefix": {
+        "value": "[parameters('virtualNetworkAddressPrefix')]"
+      },
+      "subnet1Name": {
+        "value": "[parameters('subnet1Name')]"
+      },
+      "subnet1Prefix": {
+        "value": "[parameters('subnet1Prefix')]"
+      }
+    },
+    "vnetResourceExisting": "[resourceId(parameters('virtualNetworkExistingRgName'),'Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
+    "vnetResourceId": "[if(equals(parameters('vnetNewOrExisting'), 'new'), variables('vnetResourceNew'), variables('vnetResourceExisting'))]",
+    "vnetResourceNew": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
   },
-  "resources":[
+  "resources": [
+    {
+      "type": "Microsoft.Compute/images",
+      "apiVersion": "2021-07-01",
+      "name": "[parameters('vmName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "hyperVGeneration": "V1",
+        "storageProfile": {
+          "osDisk": {
+            "blobUri": "[parameters('vhdBlobUrl')]",
+            "osState": "Generalized",
+            "osType": "Linux",
+            "caching": "ReadWrite",
+            "storageAccountType": "[parameters('storageAccountType')]"
+          }
+        }
+      }
+    },
     {
       "apiVersion": "2020-06-01",
       "type": "Microsoft.Network/networkSecurityGroups",
@@ -113,19 +268,117 @@
       }
     },
     {
-      "name":"SettingUpPrimaryNic",
-      "type":"Microsoft.Resources/deployments",
-      "apiVersion":"2020-06-01",
-      "dependsOn":[
+      "name": "SettingUpVirtualNetwork",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-06-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('virtualNetworkSetupUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": "[if(equals(parameters('vnetNewOrExisting'), 'new'), variables('vnetNewParams'), json('null'))]"
+      }
+    },
+    {
+      "name": "SettingUpPrimaryNic",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-06-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', 'SettingUpVirtualNetwork')]",
+        "[resourceId('Microsoft.Resources/deployments/', 'SettingUpPublicIP')]",
         "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]"
       ],
-      "properties":{
-        "mode":"Incremental",
-        "templateLink":{
-          "uri":"[variables('nicPrimarySetupURL')]",
-          "contentVersion":"1.0.0.0"
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('nicPrimarySetupUrl')]",
+          "contentVersion": "1.0.0.0"
         },
-        "parameters":"[variables('nicprimaryNoneParams')]"
+        "parameters": "[if(equals(variables('publicIpExistingOrNone'), 'none'), variables('nicPrimaryNoneParams'), variables('nicPrimaryExistingParams'))]"
+      }
+    },
+    {
+      "name": "SettingUpPublicIP",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-06-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('publicIpSetupUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": "[if(equals(variables('publicIpNewOrNone'), 'new'), variables('publicIpNewParams'), json('null'))]"
+      }
+    },
+    {
+      "name": "SettingUpVirtualMachine",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-06-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments/', 'SettingUpPrimaryNic')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('virtualMachineSetUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vmName": {
+            "value": "[parameters('vmName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "hardwareProfile": {
+            "value": {
+              "vmSize": "[parameters('vmSize')]"
+            }
+          },
+          "osProfile": {
+            "value": {
+              "computerName": "[parameters('vmName')]",
+              "adminUsername": "[uniqueString(ResourceGroup().Id)]",
+              "adminPassword": "[parameters('adminPassword')]",
+              "customData": "[base64(parameters('customData'))]"
+            }
+          },
+          "storageProfile": {
+            "value": {
+              "imageReference": {
+                "id": "[resourceId('Microsoft.Compute/images', parameters('vmName'))]"
+              }
+            },
+            "osDisk": {
+              "name": "[variables('osDiskName')]",
+              "caching": "ReadWrite",
+              "createOption": "FromImage",
+              "managedDisk": {
+                "storageAccountType": "[parameters('storageAccountType')]"
+              }
+            }
+          },
+          "networkProfile": {
+            "value": {
+              "networkInterfaces": [
+                {
+                  "id": "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicPrimaryName'))]",
+                  "properties": {
+                    "primary": true
+                  }
+                }
+              ]
+            }
+          },
+          "diagnosticsProfile": {
+            "value": {
+              "bootDiagnostics": {
+                "enabled": "true"
+              }
+            }
+          }
+        }
       }
     }
   ]

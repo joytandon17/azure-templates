@@ -19,27 +19,27 @@
     }
   },
   "resources": [
-        {
-            "type": "Microsoft.Network/virtualNetworks",
-            "apiVersion": "2020-11-01",
-            "name": "[parameters('virtualNetworkName')]",
-            "location": "[parameters('location')]",
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2020-11-01",
+      "name": "[parameters('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('virtualNetworkAddressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('subnet1Name')]",
             "properties": {
-                "addressSpace": {
-                    "addressPrefixes": [
-                        "[parameters('virtualNetworkAddressPrefix')]"
-                    ]
-                },
-                "subnets": [
-                    {
-                        "name": "[parameters('subnet1Name')]",
-                        "properties": {
-                            "addressPrefix": "[parameters('subnet1Prefix')]"
-                        }
-                    }
-                ]
+              "addressPrefix": "[parameters('subnet1Prefix')]"
             }
-        }
+          }
+        ]
+      }
+    }
   ],
   "outputs": {}
 }
