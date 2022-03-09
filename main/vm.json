@@ -8,6 +8,9 @@
     "vmName": {
       "type": "string"
     },
+    "plan": {
+      "type": "object"
+    },
     "hardwareProfile": {
       "type": "object"
     },
@@ -39,6 +42,7 @@
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
+      "plan": "[parameters('plan')]",
       "properties": "[variables('properties')]"
     }
   ],
