@@ -102,7 +102,7 @@
       "metadata": {
         "description": "Size of the Virtual Machine."
       },
-      "defaultValue": "Standard_B2s",
+      "defaultValue": "Standard_F4s",
       "allowedValues": [
         "Standard_B2s",
         "Standard_B2ms",
@@ -110,7 +110,8 @@
         "Standard_B8ms",
         "Standard_B12ms",
         "Standard_B16ms",
-        "Standard_B20ms"
+        "Standard_B20ms",
+        "Standard_F4s"
       ]
     },
     "vnetNewOrExisting": {
@@ -138,11 +139,17 @@
         "StandardSSD_ZRS"
       ]
     },
-    "vhdBlobUrl": {
-      "type": "string",
-      "metadata": {
-        "description": "URL pointing to the blob where the VHD to be used to create VM is located. !!! Remove before use in Azure Marketplace !!!"
-      }
+    "imagePublisher":{
+      "type": "string"
+    },
+    "imageOffer":{
+      "type": "string"
+    },
+    "imageSku":{
+      "type": "string"
+    },
+    "imageVersion":{
+      "type": "string"
     }
   },
   "variables": {
@@ -164,6 +171,9 @@
         "value": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
       }
     },
+    "planName": "infoblox-bloxone-33",
+    "planProduct": "infoblox-bloxone-33",
+    "planPublisher": "infoblox",
     "nicPrimaryName": "[concat(parameters('vmName'), '-lan1')]",
     "nicPrimaryNoneParams": {
       "location": {
@@ -226,24 +236,6 @@
   },
   "resources": [
     {
-      "type": "Microsoft.Compute/images",
-      "apiVersion": "2021-07-01",
-      "name": "[parameters('vmName')]",
-      "location": "[parameters('location')]",
-      "properties": {
-        "hyperVGeneration": "V1",
-        "storageProfile": {
-          "osDisk": {
-            "blobUri": "[parameters('vhdBlobUrl')]",
-            "osState": "Generalized",
-            "osType": "Linux",
-            "caching": "ReadWrite",
-            "storageAccountType": "[parameters('storageAccountType')]"
-          }
-        }
-      }
-    },
-    {
       "apiVersion": "2020-06-01",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('nsgName')]",
@@ -274,7 +266,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[variables('virtualNetworkSetupUrl')]",
+          "uri": "https://raw.githubusercontent.com/joytandon17/azure-templates/main/main/vm.json",
           "contentVersion": "1.0.0.0"
         },
         "parameters": "[if(equals(parameters('vnetNewOrExisting'), 'new'), variables('vnetNewParams'), json('null'))]"
@@ -292,7 +284,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[variables('nicPrimarySetupUrl')]",
+          "uri": "https://raw.githubusercontent.com/joytandon17/azure-templates/main/main/nic-pip-none.json",
           "contentVersion": "1.0.0.0"
         },
         "parameters": "[if(equals(variables('publicIpExistingOrNone'), 'none'), variables('nicPrimaryNoneParams'), variables('nicPrimaryExistingParams'))]"
@@ -321,7 +313,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[variables('virtualMachineSetUrl')]",
+          "uri": "https://raw.githubusercontent.com/joytandon17/azure-templates/main/main/vm.json",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -330,6 +322,13 @@
           },
           "location": {
             "value": "[parameters('location')]"
+          },
+          "plan": {
+            "value": {
+              "name": "[variables('planName')]",
+              "product": "[variables('planProduct')]",
+              "publisher": "[variables('planPublisher')]"
+            }
           },
           "hardwareProfile": {
             "value": {
@@ -346,8 +345,11 @@
           },
           "storageProfile": {
             "value": {
-              "imageReference": {
-                "id": "[resourceId('Microsoft.Compute/images', parameters('vmName'))]"
+              "imageReference":{
+                "publisher":"[parameters('imagePublisher')]",
+                "offer":"[parameters('imageOffer')]",
+                "sku":"[parameters('imageSku')]",
+                "version":"[parameters('imageVersion')]"
               }
             },
             "osDisk": {
