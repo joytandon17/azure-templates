@@ -266,7 +266,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "https://raw.githubusercontent.com/joytandon17/azure-templates/main/main/vm.json",
+          "uri": "https://raw.githubusercontent.com/amarozinfoblox/azure-templates/main/main/vnet-new.json",
           "contentVersion": "1.0.0.0"
         },
         "parameters": "[if(equals(parameters('vnetNewOrExisting'), 'new'), variables('vnetNewParams'), json('null'))]"
